@@ -11,7 +11,8 @@ import { loadConfig } from "./config";
 import { registerIpc } from "./ipc";
 import { createSessionStore } from "./session/electron-session-store";
 import { SessionService } from "./session/session.service";
-import { registerAskShortcut, unregisterShortcuts } from "./shortcut";
+import { restrictPermissions } from "./permissions";
+import { registerShortcuts, unregisterShortcuts } from "./shortcut";
 import { createTray } from "./tray";
 import { createMainWindow, showMainWindow } from "./window";
 
@@ -40,11 +41,11 @@ if (!app.requestSingleInstanceLock()) {
       }
     });
 
-    const askShortcut = registerAskShortcut() ? "Ctrl+Shift+Espaço" : null;
+    restrictPermissions(isAppPage);
     registerIpc({
       session,
       assistant: new AssistantService(session),
-      askShortcut,
+      shortcuts: registerShortcuts(),
     });
     createTray();
     const startedHidden = wasStartedHidden(process.argv);
@@ -59,6 +60,15 @@ if (!app.requestSingleInstanceLock()) {
 
   // Closing the window keeps Otto in the notification area.
   app.on("window-all-closed", () => undefined);
+}
+
+/** The app's own screens: the dev server or the bundled files. */
+function isAppPage(url: string): boolean {
+  const devUrl = process.env.ELECTRON_RENDERER_URL;
+  if (!app.isPackaged && devUrl && url.startsWith(new URL(devUrl).origin)) {
+    return true;
+  }
+  return url.startsWith("file://");
 }
 
 function platformOf(): "WINDOWS" | "MACOS" | "LINUX" {

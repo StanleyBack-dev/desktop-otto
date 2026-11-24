@@ -5,6 +5,8 @@ import { chatClient } from "@/features/chat/api/chat.client";
 import { Composer } from "@/features/chat/components/Composer";
 import { MessageBubble } from "@/features/chat/components/MessageBubble";
 import { useChat } from "@/features/chat/model/use-chat";
+import { MicButton } from "@/features/voice/components/MicButton";
+import { useVoiceInput } from "@/features/voice/model/use-voice-input";
 
 const EXAMPLES = [
   "Qual o clima agora?",
@@ -16,18 +18,27 @@ export function ChatScreen({
   user,
   offline,
   askShortcut,
+  talkShortcut,
   onOpenSettings,
 }: {
   user: SessionUser;
   offline: boolean;
   askShortcut: string | null;
+  talkShortcut: string | null;
   onOpenSettings: () => void;
 }) {
   const chat = useChat();
+  const voice = useVoiceInput(chat.sendVoice);
+  const listening = voice.state.status === "listening";
   const input = useRef<HTMLTextAreaElement>(null);
   const bottom = useRef<HTMLDivElement>(null);
 
   useEffect(() => chatClient.onFocusQuestion(() => input.current?.focus()), []);
+  const startListening = voice.start;
+  useEffect(
+    () => chatClient.onStartListening(() => void startListening()),
+    [startListening],
+  );
   useEffect(() => {
     bottom.current?.scrollIntoView({ behavior: "smooth" });
   }, [chat.messages.length, chat.pending]);
@@ -85,9 +96,12 @@ export function ChatScreen({
                 </button>
               ))}
             </div>
-            {askShortcut && (
+            {(askShortcut || talkShortcut) && (
               <p className="text-xs text-ink-muted">
-                De qualquer lugar do Windows: {askShortcut}
+                De qualquer lugar do Windows:
+                {talkShortcut && <> {talkShortcut} para falar</>}
+                {askShortcut && talkShortcut && " ·"}
+                {askShortcut && <> {askShortcut} para digitar</>}
               </p>
             )}
           </div>
@@ -100,13 +114,39 @@ export function ChatScreen({
             />
           ))
         )}
+        {listening && (
+          <p className="self-center text-sm text-red-500" role="status">
+            Ouvindo… fale agora. Eu paro quando você fizer uma pausa.
+          </p>
+        )}
+        {voice.state.status === "error" && (
+          <div className="self-stretch">
+            <Alert tone="warning">{voice.state.message}</Alert>
+          </div>
+        )}
         {chat.pending && (
           <p className="self-start text-sm text-ink-muted">Pensando…</p>
         )}
         <div ref={bottom} />
       </section>
 
-      <Composer ref={input} disabled={chat.pending} onSend={chat.send} />
+      <Composer
+        ref={input}
+        disabled={chat.pending || listening}
+        onSend={chat.send}
+        accessory={
+          <MicButton
+            listening={listening}
+            level={voice.state.status === "listening" ? voice.state.level : 0}
+            disabled={chat.pending}
+            onClick={() => {
+              voice.clearError();
+              chat.stop();
+              voice.toggle();
+            }}
+          />
+        }
+      />
     </main>
   );
 }

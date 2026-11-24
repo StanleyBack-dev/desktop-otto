@@ -1,12 +1,22 @@
-import { forwardRef, useState, type KeyboardEvent } from "react";
+import {
+  forwardRef,
+  useState,
+  type KeyboardEvent,
+  type ReactNode,
+} from "react";
 import { QUESTION_MAX_LENGTH } from "@shared/assistant";
 import { Button } from "@/design-system";
 
 // The question box: Enter sends, Shift+Enter breaks the line.
 export const Composer = forwardRef<
   HTMLTextAreaElement,
-  { disabled: boolean; onSend: (text: string) => void }
->(function Composer({ disabled, onSend }, ref) {
+  {
+    disabled: boolean;
+    onSend: (text: string) => void;
+    /** Extra control next to the box (the microphone). */
+    accessory?: ReactNode;
+  }
+>(function Composer({ disabled, onSend, accessory }, ref) {
   const [text, setText] = useState("");
 
   function submit() {
@@ -24,6 +34,7 @@ export const Composer = forwardRef<
 
   return (
     <div className="flex items-end gap-2 border-t border-line p-3">
+      {accessory}
       <textarea
         ref={ref}
         rows={1}

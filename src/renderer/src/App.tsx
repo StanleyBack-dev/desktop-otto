@@ -40,6 +40,7 @@ export function App() {
       user={session.user}
       offline={session.offline}
       askShortcut={info?.askShortcut ?? null}
+      talkShortcut={info?.talkShortcut ?? null}
       onOpenSettings={() => setScreen("settings")}
     />
   );

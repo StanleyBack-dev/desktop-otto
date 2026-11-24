@@ -52,6 +52,17 @@ src/
 - **Ctrl+Shift+Espaço** opens Otto with the question box focused from
   anywhere in Windows.
 
+## Asking by voice
+
+- The microphone button (or **Ctrl+Shift+O** from anywhere) records one
+  question: it stops by itself after a 1.2 s pause (or on a second click),
+  gives up after 6 s of silence and caps at 15 s.
+- The audio becomes a 16 kHz mono WAV in the screen and goes to the API
+  `askByVoice` through the main process; the transcript replaces the
+  "🎤 …" placeholder in the chat.
+- Only the app's own pages may use the microphone (audio only); every other
+  permission is denied.
+
 ## Configuration
 
 Copy `.env.example` to `.env`: `MAIN_VITE_API_URL` and
