@@ -57,6 +57,22 @@ const otto: OttoBridge = {
     setWakeWord: (enabled) =>
       ipcRenderer.invoke(IPC.setWakeWordSetting, enabled) as Promise<boolean>,
   },
+  account: {
+    settings: () => ipcRenderer.invoke(IPC.accountSettings),
+    updateSettings: (change) =>
+      ipcRenderer.invoke(IPC.accountUpdateSettings, { ...change }),
+    updateName: (name) => ipcRenderer.invoke(IPC.accountUpdateName, name),
+    searchPlaces: (name) => ipcRenderer.invoke(IPC.accountSearchPlaces, name),
+    setLocation: (place) =>
+      ipcRenderer.invoke(IPC.accountSetLocation, { ...place }),
+    newsSources: () => ipcRenderer.invoke(IPC.accountNewsSources),
+    suggestedNewsSources: () => ipcRenderer.invoke(IPC.accountSuggestedSources),
+    addNewsSource: (source) =>
+      ipcRenderer.invoke(IPC.accountAddSource, { ...source }),
+    updateNewsSource: (change) =>
+      ipcRenderer.invoke(IPC.accountUpdateSource, { ...change }),
+    removeNewsSource: (id) => ipcRenderer.invoke(IPC.accountRemoveSource, id),
+  },
   briefing: {
     today: () => ipcRenderer.invoke(IPC.briefingToday) as Promise<Briefing>,
     regenerate: () =>

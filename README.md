@@ -95,6 +95,15 @@ src/
   repeat it.
 - "Resumo" in the header asks for it any time.
 
+## Account settings (Ajustes)
+
+Kept by the API, so they follow the owner to any PC: your name
+(`updateMyProfile`), the assistant name, voice speed and `autoSpeak`, the
+**city** (searched by name with `searchPlaces`, saved with its time zone —
+moving is just searching again), the briefing time and the **news feeds**
+(suggestions, any RSS/Atom link, pause, remove). The main process checks
+every input before calling the API.
+
 ## Configuration
 
 Copy `.env.example` to `.env`: `MAIN_VITE_API_URL` and
