@@ -18,6 +18,11 @@ export function MessageBubble({
     <div
       className={`group flex max-w-[85%] flex-col gap-1 rounded-2xl px-3.5 py-2.5 text-sm whitespace-pre-wrap ${STYLES[message.role]}`}
     >
+      {message.title && (
+        <strong className="text-xs tracking-wide text-brand uppercase">
+          {message.title}
+        </strong>
+      )}
       {message.text}
       {message.role === "otto" && onSpeak && (
         <button

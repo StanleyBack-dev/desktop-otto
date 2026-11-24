@@ -85,6 +85,16 @@ src/
   first). They ship in `resources/models`; the native addon is unpacked
   from the asar.
 
+## Daily briefing
+
+- Once per local date, from the owner's `briefingTime` on (which also covers
+  turning the PC on later), Otto fetches `todayBriefing`, shows a Windows
+  notification ("Seu resumo do dia está pronto") and posts it in the chat as
+  "Resumo do dia", reading it aloud when `autoSpeak` is on. The presented
+  date is kept in `briefing-presented.txt` (AppData), so a restart does not
+  repeat it.
+- "Resumo" in the header asks for it any time.
+
 ## Configuration
 
 Copy `.env.example` to `.env`: `MAIN_VITE_API_URL` and
