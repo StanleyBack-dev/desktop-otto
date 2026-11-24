@@ -1,0 +1,21 @@
+appId: dev.stanleyrodrigues.otto
+productName: Otto
+directories:
+  buildResources: resources
+  output: dist
+files:
+  - out/**
+  - resources/**
+  - package.json
+extraResources:
+  - from: resources/tray.png
+    to: tray.png
+win:
+  target: nsis
+  icon: resources/icon.png
+nsis:
+  oneClick: true
+  perMachine: false
+  shortcutName: Otto
+  createDesktopShortcut: false
+  runAfterFinish: true
