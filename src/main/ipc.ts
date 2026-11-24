@@ -7,6 +7,7 @@ import { isAutostartEnabled, setAutostart } from "./autostart";
 import type { SessionService } from "./session/session.service";
 import type { ShortcutLabels } from "./shortcut";
 import type { WakeService } from "./wake/wake.service";
+import type { BriefingService } from "./briefing/briefing.service";
 import { refreshTrayMenu } from "./tray";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -18,8 +19,9 @@ export function registerIpc(deps: {
   assistant: AssistantService;
   shortcuts: ShortcutLabels;
   wake: WakeService;
+  briefing: BriefingService;
 }): void {
-  const { session, assistant, wake } = deps;
+  const { session, assistant, wake, briefing } = deps;
 
   ipcMain.handle(IPC.appInfo, (): AppInfo => ({
     name: app.getName(),
@@ -107,6 +109,9 @@ export function registerIpc(deps: {
   ipcMain.handle(IPC.setWakeWordSetting, (_event, enabled: unknown) =>
     typeof enabled === "boolean" ? assistant.setWakeWord(enabled) : false,
   );
+
+  ipcMain.handle(IPC.briefingToday, () => briefing.today());
+  ipcMain.handle(IPC.briefingRegenerate, () => briefing.regenerate());
 
   ipcMain.handle(IPC.wakeEnable, (_event, name: unknown) =>
     wake.enable(typeof name === "string" ? name.slice(0, 40) : "Otto"),

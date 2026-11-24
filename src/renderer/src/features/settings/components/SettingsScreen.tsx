@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
 import type { AppInfo } from "@shared/ipc";
 import type { SessionUser } from "@shared/session";
-import { Button, Card, Select, Switch } from "@/design-system";
+import { Alert, Button, Card, Select, Switch } from "@/design-system";
+import { BriefingSection } from "@/features/account/components/BriefingSection";
+import { LocationSection } from "@/features/account/components/LocationSection";
+import { NewsSection } from "@/features/account/components/NewsSection";
+import { ProfileSection } from "@/features/account/components/ProfileSection";
+import { useAccountSettings } from "@/features/account/model/use-account-settings";
 import { authClient } from "@/features/auth/api/auth.client";
 import { chatClient } from "@/features/chat/api/chat.client";
 import { systemClient } from "@/features/system/api/system.client";
@@ -25,6 +30,7 @@ export function SettingsScreen({
   info: AppInfo | null;
   onBack: () => void;
 }) {
+  const account = useAccountSettings();
   const [autostart, setAutostart] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [wakeWord, setWakeWord] = useState<boolean | null>(null);
@@ -53,6 +59,30 @@ export function SettingsScreen({
       </header>
 
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
+        {account.error && <Alert tone="error">{account.error}</Alert>}
+        {account.settings ? (
+          <>
+            <ProfileSection
+              ownerName={user.name}
+              settings={account.settings}
+              onUpdate={account.update}
+            />
+            <LocationSection
+              settings={account.settings}
+              onSaved={account.apply}
+            />
+            <BriefingSection
+              settings={account.settings}
+              onUpdate={account.update}
+            />
+            <NewsSection />
+          </>
+        ) : (
+          !account.error && (
+            <p className="text-sm text-ink-muted">Carregando sua conta…</p>
+          )
+        )}
+
         <Card title="Inicialização">
           <Switch
             label="Iniciar com o Windows"

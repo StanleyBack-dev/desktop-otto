@@ -92,12 +92,22 @@ export function useChat() {
     [finish],
   );
 
+  /** Shows Otto's own message (the briefing) and reads it as an answer. */
+  const announce = useCallback(
+    (title: string, text: string) => {
+      dispatch({ type: "announced", id: newId(), title, text });
+      if (voice.autoSpeak) say(text);
+    },
+    [voice.autoSpeak, say],
+  );
+
   return {
     ...state,
     voice,
     speaking,
     send,
     sendVoice,
+    announce,
     say,
     stop: () => {
       stopSpeaking();

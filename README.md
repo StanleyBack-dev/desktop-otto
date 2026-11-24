@@ -85,6 +85,29 @@ src/
   first). They ship in `resources/models`; the native addon is unpacked
   from the asar.
 
+## Daily briefing
+
+- Once per local date, from the owner's `briefingTime` on (which also covers
+  turning the PC on later), Otto fetches `todayBriefing`, shows a Windows
+  notification ("Seu resumo do dia está pronto") and posts it in the chat as
+  "Resumo do dia", reading it aloud when `autoSpeak` is on. The presented
+  date is kept in `briefing-presented.txt` (AppData), so a restart does not
+  repeat it.
+- The **Hoje** tab shows the briefing ("Ouvir", "Refazer com os dados de
+  agora"), the weather now and for today and tomorrow, the agenda (past
+  events struck through, the current one marked, the next one on top) and
+  the latest headlines (opened in the browser). Each card loads and fails on
+  its own.
+
+## Account settings (Ajustes)
+
+Kept by the API, so they follow the owner to any PC: your name
+(`updateMyProfile`), the assistant name, voice speed and `autoSpeak`, the
+**city** (searched by name with `searchPlaces`, saved with its time zone —
+moving is just searching again), the briefing time and the **news feeds**
+(suggestions, any RSS/Atom link, pause, remove). The main process checks
+every input before calling the API.
+
 ## Configuration
 
 Copy `.env.example` to `.env`: `MAIN_VITE_API_URL` and

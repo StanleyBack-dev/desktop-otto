@@ -6,6 +6,7 @@ import { chatClient } from "@/features/chat/api/chat.client";
 import { Composer } from "@/features/chat/components/Composer";
 import { MessageBubble } from "@/features/chat/components/MessageBubble";
 import { useChat } from "@/features/chat/model/use-chat";
+import { briefingClient } from "@/features/briefing/api/briefing.client";
 import { MicButton } from "@/features/voice/components/MicButton";
 import { useVoiceInput } from "@/features/voice/model/use-voice-input";
 import { useWakeWord } from "@/features/voice/model/use-wake-word";
@@ -22,16 +23,26 @@ export function ChatScreen({
   askShortcut,
   talkShortcut,
   onOpenSettings,
+  onOpenToday,
 }: {
   user: SessionUser;
   offline: boolean;
   askShortcut: string | null;
   talkShortcut: string | null;
   onOpenSettings: () => void;
+  onOpenToday: () => void;
 }) {
   const chat = useChat();
   const voice = useVoiceInput(chat.sendVoice);
   const listening = voice.state.status === "listening";
+  const announce = chat.announce;
+  useEffect(
+    () =>
+      briefingClient.onPresented((briefing) =>
+        announce("Resumo do dia", briefing.text),
+      ),
+    [announce],
+  );
   const wake = useWakeWord({
     enabled: chat.voice.wakeWordEnabled,
     name: chat.voice.assistantName,
@@ -74,6 +85,9 @@ export function ChatScreen({
               Nova conversa
             </Button>
           )}
+          <Button variant="ghost" onClick={onOpenToday}>
+            Hoje
+          </Button>
           <Button variant="ghost" onClick={onOpenSettings}>
             Ajustes
           </Button>

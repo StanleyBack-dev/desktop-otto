@@ -1,11 +1,16 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, ipcMain, Notification } from "electron";
 import { existsSync, writeFileSync } from "fs";
 import { hostname } from "os";
 import { join } from "path";
 import { IPC } from "@shared/ipc";
 import { wasStartedHidden } from "@shared/launch-args";
 import { GraphqlClient } from "./api/graphql-client";
+import { registerAccountIpc } from "./account/account.ipc";
+import { TodayService } from "./today/today.service";
+import { AccountService } from "./account/account.service";
 import { AssistantService } from "./assistant/assistant.service";
+import { BriefingScheduler } from "./briefing/briefing-scheduler";
+import { BriefingService } from "./briefing/briefing.service";
 import { enableAutostartOnFirstRun } from "./autostart";
 import { loadConfig } from "./config";
 import { registerIpc } from "./ipc";
@@ -18,6 +23,9 @@ import { createTray } from "./tray";
 import { WakeDiagnostics } from "./wake/wake-diagnostics";
 import { WakeService } from "./wake/wake.service";
 import { createMainWindow, showMainWindow } from "./window";
+
+// Portuguese for the native controls (24 h time fields, dialogs).
+app.commandLine.appendSwitch("lang", "pt-BR");
 
 // One Otto per Windows session: a second launch only shows the window.
 if (!app.requestSingleInstanceLock()) {
@@ -60,12 +68,42 @@ if (!app.requestSingleInstanceLock()) {
     );
     app.on("will-quit", () => wake.disable());
 
+    const briefing = new BriefingService(session);
+    const scheduler = new BriefingScheduler(
+      briefing,
+      join(app.getPath("userData"), "briefing-presented.txt"),
+      (today) => {
+        broadcast(IPC.briefingPresented, today);
+        if (Notification.isSupported()) {
+          const notice = new Notification({
+            title: "Seu resumo do dia está pronto",
+            body: today.text.split(/(?<=[.!?])\s/)[0].slice(0, 180),
+            icon: resourcePath("icon.png"),
+          });
+          notice.on("click", () => showMainWindow());
+          notice.show();
+        }
+      },
+      () => session.current().status === "signed-in",
+    );
+    session.onChange((state) => {
+      if (state.status === "signed-in") scheduler.start();
+      else scheduler.stop();
+    });
+    app.on("will-quit", () => scheduler.stop());
+
+    registerAccountIpc(new AccountService(session));
+    const today = new TodayService(session);
+    ipcMain.handle(IPC.todayWeather, () => today.weather());
+    ipcMain.handle(IPC.todayAgenda, () => today.agenda());
+    ipcMain.handle(IPC.todayNews, () => today.news());
     restrictPermissions(isAppPage);
     registerIpc({
       session,
       assistant: new AssistantService(session),
       shortcuts: registerShortcuts(),
       wake,
+      briefing,
     });
     createTray();
     const startedHidden = wasStartedHidden(process.argv);

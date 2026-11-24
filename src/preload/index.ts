@@ -3,6 +3,7 @@ import type { AskResult, VoiceSettings } from "@shared/assistant";
 import { IPC, type AppInfo, type OttoBridge } from "@shared/ipc";
 import type { LoginResult, SessionState } from "@shared/session";
 import type { WakeEvent, WakeStatus } from "@shared/wake";
+import type { Briefing } from "@shared/briefing";
 
 // Subscribes to a main → renderer event; returns the unsubscribe function.
 function on<T extends unknown[]>(
@@ -55,6 +56,34 @@ const otto: OttoBridge = {
       ipcRenderer.invoke(IPC.voiceSettings) as Promise<VoiceSettings>,
     setWakeWord: (enabled) =>
       ipcRenderer.invoke(IPC.setWakeWordSetting, enabled) as Promise<boolean>,
+  },
+  account: {
+    settings: () => ipcRenderer.invoke(IPC.accountSettings),
+    updateSettings: (change) =>
+      ipcRenderer.invoke(IPC.accountUpdateSettings, { ...change }),
+    updateName: (name) => ipcRenderer.invoke(IPC.accountUpdateName, name),
+    searchPlaces: (name) => ipcRenderer.invoke(IPC.accountSearchPlaces, name),
+    setLocation: (place) =>
+      ipcRenderer.invoke(IPC.accountSetLocation, { ...place }),
+    newsSources: () => ipcRenderer.invoke(IPC.accountNewsSources),
+    suggestedNewsSources: () => ipcRenderer.invoke(IPC.accountSuggestedSources),
+    addNewsSource: (source) =>
+      ipcRenderer.invoke(IPC.accountAddSource, { ...source }),
+    updateNewsSource: (change) =>
+      ipcRenderer.invoke(IPC.accountUpdateSource, { ...change }),
+    removeNewsSource: (id) => ipcRenderer.invoke(IPC.accountRemoveSource, id),
+  },
+  today: {
+    weather: () => ipcRenderer.invoke(IPC.todayWeather),
+    agenda: () => ipcRenderer.invoke(IPC.todayAgenda),
+    news: () => ipcRenderer.invoke(IPC.todayNews),
+  },
+  briefing: {
+    today: () => ipcRenderer.invoke(IPC.briefingToday) as Promise<Briefing>,
+    regenerate: () =>
+      ipcRenderer.invoke(IPC.briefingRegenerate) as Promise<Briefing>,
+    onPresented: (listener) =>
+      on<[Briefing]>(IPC.briefingPresented, (briefing) => listener(briefing)),
   },
   wake: {
     enable: (name) =>

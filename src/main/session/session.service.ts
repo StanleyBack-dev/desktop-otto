@@ -116,6 +116,14 @@ export class SessionService {
     this.end("logout");
   }
 
+  /** The owner's name or e-mail changed: keep the saved session in sync. */
+  updateUser(user: { name: string; email: string }): void {
+    if (!this.stored || this.state.status !== "signed-in") return;
+    this.stored = { ...this.stored, user };
+    this.store.save(this.stored);
+    this.set({ ...this.state, user });
+  }
+
   /** An authenticated API call (used by every feature of the app). */
   async call<T>(
     query: string,
