@@ -5,6 +5,8 @@ import { join } from "path";
 import { IPC } from "@shared/ipc";
 import { wasStartedHidden } from "@shared/launch-args";
 import { GraphqlClient } from "./api/graphql-client";
+import { registerAccountIpc } from "./account/account.ipc";
+import { AccountService } from "./account/account.service";
 import { AssistantService } from "./assistant/assistant.service";
 import { BriefingScheduler } from "./briefing/briefing-scheduler";
 import { BriefingService } from "./briefing/briefing.service";
@@ -20,6 +22,9 @@ import { createTray } from "./tray";
 import { WakeDiagnostics } from "./wake/wake-diagnostics";
 import { WakeService } from "./wake/wake.service";
 import { createMainWindow, showMainWindow } from "./window";
+
+// Portuguese for the native controls (24 h time fields, dialogs).
+app.commandLine.appendSwitch("lang", "pt-BR");
 
 // One Otto per Windows session: a second launch only shows the window.
 if (!app.requestSingleInstanceLock()) {
@@ -86,6 +91,7 @@ if (!app.requestSingleInstanceLock()) {
     });
     app.on("will-quit", () => scheduler.stop());
 
+    registerAccountIpc(new AccountService(session));
     restrictPermissions(isAppPage);
     registerIpc({
       session,
