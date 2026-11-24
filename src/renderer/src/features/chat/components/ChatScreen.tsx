@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import type { SessionUser } from "@shared/session";
 import type { WakeStatus } from "@shared/wake";
 import { Alert, Button, ListeningMark } from "@/design-system";
@@ -23,12 +23,14 @@ export function ChatScreen({
   askShortcut,
   talkShortcut,
   onOpenSettings,
+  onOpenToday,
 }: {
   user: SessionUser;
   offline: boolean;
   askShortcut: string | null;
   talkShortcut: string | null;
   onOpenSettings: () => void;
+  onOpenToday: () => void;
 }) {
   const chat = useChat();
   const voice = useVoiceInput(chat.sendVoice);
@@ -41,21 +43,6 @@ export function ChatScreen({
       ),
     [announce],
   );
-  const [loadingBriefing, setLoadingBriefing] = useState(false);
-  async function showBriefing() {
-    setLoadingBriefing(true);
-    try {
-      announce("Resumo do dia", (await briefingClient.today()).text);
-    } catch {
-      announce(
-        "Resumo do dia",
-        "Não consegui buscar o resumo agora. Tente de novo.",
-      );
-    } finally {
-      setLoadingBriefing(false);
-    }
-  }
-
   const wake = useWakeWord({
     enabled: chat.voice.wakeWordEnabled,
     name: chat.voice.assistantName,
@@ -98,12 +85,8 @@ export function ChatScreen({
               Nova conversa
             </Button>
           )}
-          <Button
-            variant="ghost"
-            loading={loadingBriefing}
-            onClick={() => void showBriefing()}
-          >
-            Resumo
+          <Button variant="ghost" onClick={onOpenToday}>
+            Hoje
           </Button>
           <Button variant="ghost" onClick={onOpenSettings}>
             Ajustes

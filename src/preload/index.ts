@@ -73,6 +73,11 @@ const otto: OttoBridge = {
       ipcRenderer.invoke(IPC.accountUpdateSource, { ...change }),
     removeNewsSource: (id) => ipcRenderer.invoke(IPC.accountRemoveSource, id),
   },
+  today: {
+    weather: () => ipcRenderer.invoke(IPC.todayWeather),
+    agenda: () => ipcRenderer.invoke(IPC.todayAgenda),
+    news: () => ipcRenderer.invoke(IPC.todayNews),
+  },
   briefing: {
     today: () => ipcRenderer.invoke(IPC.briefingToday) as Promise<Briefing>,
     regenerate: () =>
