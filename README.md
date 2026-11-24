@@ -40,6 +40,18 @@ src/
 - Offline at start-up keeps the saved session ("Sem conexão" until the API
   answers); a removed device signs out.
 
+## Conversation
+
+- The window is a chat with Otto: questions go to the API `ask` mutation
+  through the main process and the conversation continues until "Nova
+  conversa".
+- Answers are spoken with the voices installed on Windows (offline): the
+  best voice for the owner's language, at the owner's speed; `autoSpeak`
+  decides whether every answer is read aloud ("Ouvir" reads one, "Parar"
+  stops).
+- **Ctrl+Shift+Espaço** opens Otto with the question box focused from
+  anywhere in Windows.
+
 ## Configuration
 
 Copy `.env.example` to `.env`: `MAIN_VITE_API_URL` and

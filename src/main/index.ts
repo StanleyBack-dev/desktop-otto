@@ -5,11 +5,13 @@ import { join } from "path";
 import { IPC } from "@shared/ipc";
 import { wasStartedHidden } from "@shared/launch-args";
 import { GraphqlClient } from "./api/graphql-client";
+import { AssistantService } from "./assistant/assistant.service";
 import { enableAutostartOnFirstRun } from "./autostart";
 import { loadConfig } from "./config";
 import { registerIpc } from "./ipc";
 import { createSessionStore } from "./session/electron-session-store";
 import { SessionService } from "./session/session.service";
+import { registerAskShortcut, unregisterShortcuts } from "./shortcut";
 import { createTray } from "./tray";
 import { createMainWindow, showMainWindow } from "./window";
 
@@ -38,7 +40,12 @@ if (!app.requestSingleInstanceLock()) {
       }
     });
 
-    registerIpc(session);
+    const askShortcut = registerAskShortcut() ? "Ctrl+Shift+Espaço" : null;
+    registerIpc({
+      session,
+      assistant: new AssistantService(session),
+      askShortcut,
+    });
     createTray();
     const startedHidden = wasStartedHidden(process.argv);
     createMainWindow({ show: !startedHidden });
@@ -47,6 +54,8 @@ if (!app.requestSingleInstanceLock()) {
     // Signed out at start-up: show the login even when started hidden.
     if (state.status === "signed-out" && startedHidden) showMainWindow();
   });
+
+  app.on("will-quit", unregisterShortcuts);
 
   // Closing the window keeps Otto in the notification area.
   app.on("window-all-closed", () => undefined);
