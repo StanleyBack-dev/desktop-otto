@@ -5,12 +5,18 @@ import { join } from "path";
 import { IPC } from "@shared/ipc";
 import { wasStartedHidden } from "@shared/launch-args";
 import { GraphqlClient } from "./api/graphql-client";
+import { AssistantService } from "./assistant/assistant.service";
 import { enableAutostartOnFirstRun } from "./autostart";
 import { loadConfig } from "./config";
 import { registerIpc } from "./ipc";
 import { createSessionStore } from "./session/electron-session-store";
 import { SessionService } from "./session/session.service";
+import { restrictPermissions } from "./permissions";
+import { registerShortcuts, unregisterShortcuts } from "./shortcut";
+import { resourcePath } from "./resources";
 import { createTray } from "./tray";
+import { WakeDiagnostics } from "./wake/wake-diagnostics";
+import { WakeService } from "./wake/wake.service";
 import { createMainWindow, showMainWindow } from "./window";
 
 // One Otto per Windows session: a second launch only shows the window.
@@ -18,7 +24,7 @@ if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
   app.setAppUserModelId("dev.stanleyrodrigues.otto");
-  app.on("second-instance", showMainWindow);
+  app.on("second-instance", () => showMainWindow());
 
   void app.whenReady().then(async () => {
     const marker = join(app.getPath("userData"), ".first-run-done");
@@ -38,7 +44,29 @@ if (!app.requestSingleInstanceLock()) {
       }
     });
 
-    registerIpc(session);
+    const broadcast = (channel: string, payload: unknown) => {
+      for (const window of BrowserWindow.getAllWindows()) {
+        window.webContents.send(channel, payload);
+      }
+    };
+    const wake = new WakeService(
+      resourcePath("models"),
+      (event) => {
+        showMainWindow({ focus: false });
+        broadcast(IPC.wakeHeard, event);
+      },
+      (status) => broadcast(IPC.wakeStatusChanged, status),
+      app.isPackaged ? null : new WakeDiagnostics(),
+    );
+    app.on("will-quit", () => wake.disable());
+
+    restrictPermissions(isAppPage);
+    registerIpc({
+      session,
+      assistant: new AssistantService(session),
+      shortcuts: registerShortcuts(),
+      wake,
+    });
     createTray();
     const startedHidden = wasStartedHidden(process.argv);
     createMainWindow({ show: !startedHidden });
@@ -48,8 +76,19 @@ if (!app.requestSingleInstanceLock()) {
     if (state.status === "signed-out" && startedHidden) showMainWindow();
   });
 
+  app.on("will-quit", unregisterShortcuts);
+
   // Closing the window keeps Otto in the notification area.
   app.on("window-all-closed", () => undefined);
+}
+
+/** The app's own screens: the dev server or the bundled files. */
+function isAppPage(url: string): boolean {
+  const devUrl = process.env.ELECTRON_RENDERER_URL;
+  if (!app.isPackaged && devUrl && url.startsWith(new URL(devUrl).origin)) {
+    return true;
+  }
+  return url.startsWith("file://");
 }
 
 function platformOf(): "WINDOWS" | "MACOS" | "LINUX" {

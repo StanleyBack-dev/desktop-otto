@@ -8,16 +8,17 @@
   "license": "UNLICENSED",
   "main": "out/main/index.js",
   "scripts": {
-    "dev": "electron-vite dev",
+    "dev": "npm run models && electron-vite dev",
     "build": "electron-vite build",
     "start": "electron-vite preview",
-    "dist": "electron-vite build && electron-builder --win",
+    "dist": "npm run models && electron-vite build && electron-builder --win",
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
     "lint": "eslint . --fix",
     "lint:check": "eslint .",
     "format": "prettier --write .",
     "test": "vitest run",
-    "icons": "node scripts/generate-icons.mjs"
+    "icons": "node scripts/generate-icons.mjs",
+    "models": "node scripts/fetch-models.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
@@ -41,6 +42,7 @@
   },
   "dependencies": {
     "react": "^19.3.1",
-    "react-dom": "^19.3.1"
+    "react-dom": "^19.3.1",
+    "sherpa-onnx-node": "2.0.3"
   }
 }

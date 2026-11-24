@@ -9,7 +9,7 @@ let tray: Tray | null = null;
 export function createTray(): Tray {
   tray = new Tray(nativeImage.createFromPath(resourcePath("tray.png")));
   tray.setToolTip("Otto");
-  tray.on("click", showMainWindow);
+  tray.on("click", () => showMainWindow());
   refreshTrayMenu();
   return tray;
 }
@@ -17,7 +17,7 @@ export function createTray(): Tray {
 export function refreshTrayMenu(): void {
   tray?.setContextMenu(
     Menu.buildFromTemplate([
-      { label: "Abrir o Otto", click: showMainWindow },
+      { label: "Abrir o Otto", click: () => showMainWindow() },
       { type: "separator" },
       {
         label: "Iniciar com o Windows",
