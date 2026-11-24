@@ -93,7 +93,11 @@ src/
   "Resumo do dia", reading it aloud when `autoSpeak` is on. The presented
   date is kept in `briefing-presented.txt` (AppData), so a restart does not
   repeat it.
-- "Resumo" in the header asks for it any time.
+- The **Hoje** tab shows the briefing ("Ouvir", "Refazer com os dados de
+  agora"), the weather now and for today and tomorrow, the agenda (past
+  events struck through, the current one marked, the next one on top) and
+  the latest headlines (opened in the browser). Each card loads and fails on
+  its own.
 
 ## Account settings (Ajustes)
 

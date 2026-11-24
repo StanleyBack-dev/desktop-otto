@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Notification } from "electron";
+import { app, BrowserWindow, ipcMain, Notification } from "electron";
 import { existsSync, writeFileSync } from "fs";
 import { hostname } from "os";
 import { join } from "path";
@@ -6,6 +6,7 @@ import { IPC } from "@shared/ipc";
 import { wasStartedHidden } from "@shared/launch-args";
 import { GraphqlClient } from "./api/graphql-client";
 import { registerAccountIpc } from "./account/account.ipc";
+import { TodayService } from "./today/today.service";
 import { AccountService } from "./account/account.service";
 import { AssistantService } from "./assistant/assistant.service";
 import { BriefingScheduler } from "./briefing/briefing-scheduler";
@@ -92,6 +93,10 @@ if (!app.requestSingleInstanceLock()) {
     app.on("will-quit", () => scheduler.stop());
 
     registerAccountIpc(new AccountService(session));
+    const today = new TodayService(session);
+    ipcMain.handle(IPC.todayWeather, () => today.weather());
+    ipcMain.handle(IPC.todayAgenda, () => today.agenda());
+    ipcMain.handle(IPC.todayNews, () => today.news());
     restrictPermissions(isAppPage);
     registerIpc({
       session,
