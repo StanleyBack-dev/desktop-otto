@@ -29,6 +29,23 @@ src/
   starts with `--hidden`, straight to the notification area); the switch is
   in the window and in the tray menu.
 
+## Session
+
+- Login with the owner account; each PC is a device of the account (named
+  after the computer). The refresh token is saved encrypted with the
+  Windows user's key (Electron `safeStorage`, DPAPI) in AppData; the
+  access token lives only in memory and is renewed before it expires.
+- All API calls go through `SessionService.call` in the main process; the
+  screens only see `signed-in` / `signed-out` and the user's name.
+- Offline at start-up keeps the saved session ("Sem conexão" until the API
+  answers); a removed device signs out.
+
+## Configuration
+
+Copy `.env.example` to `.env`: `MAIN_VITE_API_URL` and
+`MAIN_VITE_CLIENT_API_KEY` (the API's `CLIENT_API_KEY`). They are read at
+build time by the main process only.
+
 ## Running locally
 
 ```bash
