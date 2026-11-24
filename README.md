@@ -49,6 +49,11 @@ src/
   best voice for the owner's language, at the owner's speed; `autoSpeak`
   decides whether every answer is read aloud ("Ouvir" reads one, "Parar"
   stops).
+- Ajustes > **Voz do Otto** lists the installed Windows voices of the
+  owner's language with a preview ("Ouvir esta voz"); the choice is saved on
+  this PC and falls back to the automatic one when it is uninstalled.
+- Ajustes > **Microfone** picks the input (with a live level meter); saved on
+  this PC, falls back to the Windows default when unplugged.
 - **Ctrl+Shift+Espaço** opens Otto with the question box focused from
   anywhere in Windows.
 
@@ -62,6 +67,23 @@ src/
   "🎤 …" placeholder in the chat.
 - Only the app's own pages may use the microphone (audio only); every other
   permission is denied.
+
+## Wake word ("Otto")
+
+- With "Ouvir quando eu disser Otto" on (Ajustes; saved as
+  `wakeWordEnabled` in the account), the screen streams the raw microphone
+  (16 kHz) to a worker thread in the main process: Silero VAD finds phrases
+  and Whisper tiny transcribes the short ones **on the PC** (sherpa-onnx,
+  offline). Nothing leaves the PC until the name is heard.
+- The name comes from the settings and is compared by sound (`soundsLike`:
+  "Ótu", "Ópto", "auto"… for "Otto"; not "foto", "oito", "ato"). With a
+  question after it ("Otto, que horas são?") that phrase goes to
+  `askByVoice`; with the name alone Otto starts listening.
+- The listener pauses while Otto records, thinks or speaks.
+- Models (~105 MB, not in git): `npm run models` downloads them from the
+  sherpa-onnx releases and checks their SHA-256 (`dev` and `dist` run it
+  first). They ship in `resources/models`; the native addon is unpacked
+  from the asar.
 
 ## Configuration
 

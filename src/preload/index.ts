@@ -2,6 +2,7 @@ import { contextBridge, ipcRenderer, type IpcRendererEvent } from "electron";
 import type { AskResult, VoiceSettings } from "@shared/assistant";
 import { IPC, type AppInfo, type OttoBridge } from "@shared/ipc";
 import type { LoginResult, SessionState } from "@shared/session";
+import type { WakeEvent, WakeStatus } from "@shared/wake";
 
 // Subscribes to a main → renderer event; returns the unsubscribe function.
 function on<T extends unknown[]>(
@@ -52,6 +53,20 @@ const otto: OttoBridge = {
       }) as Promise<AskResult>,
     voiceSettings: () =>
       ipcRenderer.invoke(IPC.voiceSettings) as Promise<VoiceSettings>,
+    setWakeWord: (enabled) =>
+      ipcRenderer.invoke(IPC.setWakeWordSetting, enabled) as Promise<boolean>,
+  },
+  wake: {
+    enable: (name) =>
+      ipcRenderer.invoke(IPC.wakeEnable, name) as Promise<WakeStatus>,
+    disable: () => ipcRenderer.invoke(IPC.wakeDisable) as Promise<WakeStatus>,
+    status: () => ipcRenderer.invoke(IPC.wakeStatus) as Promise<WakeStatus>,
+    sendAudio: (samples) => ipcRenderer.send(IPC.wakeAudio, samples),
+    setPaused: (paused) => ipcRenderer.send(IPC.wakePause, paused),
+    onHeard: (listener) =>
+      on<[WakeEvent]>(IPC.wakeHeard, (event) => listener(event)),
+    onStatus: (listener) =>
+      on<[WakeStatus]>(IPC.wakeStatusChanged, (status) => listener(status)),
   },
 };
 

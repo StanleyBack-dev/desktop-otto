@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { chatReducer, INITIAL_CHAT } from "./chat-state";
-import { pickVoice } from "./speech";
+import { chooseVoice, pickVoice } from "./speech";
 
 describe("chatReducer", () => {
   it("keeps the conversation and its id across answers", () => {
@@ -59,5 +59,32 @@ describe("pickVoice", () => {
     );
     expect(pickVoice(voices, "en-GB")?.name).toBe("Microsoft David - English");
     expect(pickVoice(voices, "es-ES")).toBeNull();
+  });
+});
+
+describe("chooseVoice", () => {
+  const voices = [
+    {
+      name: "Maria",
+      lang: "pt-BR",
+      localService: true,
+      default: false,
+      voiceURI: "maria",
+    },
+    {
+      name: "Francisca Natural",
+      lang: "pt-BR",
+      localService: true,
+      default: false,
+      voiceURI: "francisca",
+    },
+  ];
+
+  it("uses the chosen voice, or the best one when it is gone", () => {
+    expect(chooseVoice(voices, "pt-BR", "maria")?.name).toBe("Maria");
+    expect(chooseVoice(voices, "pt-BR", "uninstalled")?.name).toBe(
+      "Francisca Natural",
+    );
+    expect(chooseVoice(voices, "pt-BR", "")?.name).toBe("Francisca Natural");
   });
 });

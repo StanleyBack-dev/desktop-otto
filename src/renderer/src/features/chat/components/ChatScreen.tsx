@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import type { SessionUser } from "@shared/session";
+import type { WakeStatus } from "@shared/wake";
 import { Alert, Button, ListeningMark } from "@/design-system";
 import { chatClient } from "@/features/chat/api/chat.client";
 import { Composer } from "@/features/chat/components/Composer";
@@ -7,6 +8,7 @@ import { MessageBubble } from "@/features/chat/components/MessageBubble";
 import { useChat } from "@/features/chat/model/use-chat";
 import { MicButton } from "@/features/voice/components/MicButton";
 import { useVoiceInput } from "@/features/voice/model/use-voice-input";
+import { useWakeWord } from "@/features/voice/model/use-wake-word";
 
 const EXAMPLES = [
   "Qual o clima agora?",
@@ -30,6 +32,16 @@ export function ChatScreen({
   const chat = useChat();
   const voice = useVoiceInput(chat.sendVoice);
   const listening = voice.state.status === "listening";
+  const wake = useWakeWord({
+    enabled: chat.voice.wakeWordEnabled,
+    name: chat.voice.assistantName,
+    paused: listening || chat.pending || chat.speaking,
+    onHeard: (event) => {
+      chat.stop();
+      if (event.kind === "question") void chat.sendVoice(event.audioBase64);
+      else void voice.start();
+    },
+  });
   const input = useRef<HTMLTextAreaElement>(null);
   const bottom = useRef<HTMLDivElement>(null);
 
@@ -48,6 +60,7 @@ export function ChatScreen({
       <header className="flex items-center justify-between gap-2 border-b border-line px-4 py-3">
         <div className="flex items-center gap-3">
           <ListeningMark size={28} active={chat.pending || chat.speaking} />
+          <WakeIndicator status={wake} name={chat.voice.assistantName} />
           <span className="font-semibold">{chat.voice.assistantName}</span>
         </div>
         <div className="flex gap-1">
@@ -148,5 +161,28 @@ export function ChatScreen({
         }
       />
     </main>
+  );
+}
+
+// Shows whether Otto is listening for its name in the background.
+function WakeIndicator({ status, name }: { status: WakeStatus; name: string }) {
+  if (status.state === "off") return null;
+  const text =
+    status.state === "listening"
+      ? `Diga “${name}”`
+      : status.state === "starting"
+        ? "Preparando…"
+        : "Escuta indisponível";
+  return (
+    <span
+      title={status.state === "unavailable" ? status.message : undefined}
+      className={`rounded-full px-2 py-0.5 text-xs ${
+        status.state === "listening"
+          ? "bg-brand/15 text-brand"
+          : "bg-surface-muted text-ink-muted"
+      }`}
+    >
+      {text}
+    </span>
   );
 }

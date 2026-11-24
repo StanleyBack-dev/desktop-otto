@@ -15,7 +15,11 @@ const ANSWER = `conversation { id } question { text } answer { text } toolsUsed`
 const ASK = `mutation Ask($input: AskInput!) { ask(input: $input) { ${ANSWER} } }`;
 const ASK_BY_VOICE = `mutation AskByVoice($input: AskByVoiceInput!) { askByVoice(input: $input) { ${ANSWER} } }`;
 const SETTINGS = `query VoiceSettings {
-  mySettings { assistantName language speechRate autoSpeak }
+  mySettings { assistantName language speechRate autoSpeak wakeWordEnabled }
+}`;
+
+const SET_WAKE_WORD = `mutation SetWakeWord($input: UpdateSettingsInput!) {
+  updateMySettings(input: $input) { wakeWordEnabled }
 }`;
 
 type AnswerPayload = {
@@ -66,6 +70,14 @@ export class AssistantService {
     }).then((result) =>
       result.ok ? this.toResult(result.data.askByVoice) : result,
     );
+  }
+
+  /** Saves "listen for the name"; returns the saved value. */
+  async setWakeWord(enabled: boolean): Promise<boolean> {
+    const { updateMySettings } = await this.session.call<{
+      updateMySettings: { wakeWordEnabled: boolean };
+    }>(SET_WAKE_WORD, { input: { wakeWordEnabled: enabled } });
+    return updateMySettings.wakeWordEnabled;
   }
 
   /** The voice preferences; the defaults when the API is unreachable. */

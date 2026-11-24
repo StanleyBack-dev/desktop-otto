@@ -10,6 +10,14 @@ files:
 extraResources:
   - from: resources/tray.png
     to: tray.png
+  - from: resources/icon.png
+    to: icon.png
+  # Offline speech models (npm run models), read by the native addon.
+  - from: resources/models
+    to: models
+# The native speech addon and its DLLs cannot run from inside the asar.
+asarUnpack:
+  - node_modules/sherpa-onnx-*/**
 win:
   target: nsis
   icon: resources/icon.png

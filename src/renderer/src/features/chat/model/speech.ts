@@ -40,6 +40,57 @@ export function pickVoice<T extends VoiceLike>(
   return best;
 }
 
+const VOICE_KEY = "otto.voice";
+
+/** The voice chosen in Ajustes on this PC ("" = automatic). */
+export function preferredVoice(): string {
+  try {
+    return localStorage.getItem(VOICE_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+export function setPreferredVoice(voiceURI: string): void {
+  try {
+    if (voiceURI) localStorage.setItem(VOICE_KEY, voiceURI);
+    else localStorage.removeItem(VOICE_KEY);
+  } catch {
+    // Not saved: the automatic choice keeps being used.
+  }
+}
+
+/**
+ * The chosen voice when it is installed, otherwise the best one for the
+ * language.
+ */
+export function chooseVoice<T extends VoiceLike & { voiceURI: string }>(
+  voices: readonly T[],
+  language: string,
+  chosen: string,
+): T | null {
+  return (
+    (chosen ? voices.find((voice) => voice.voiceURI === chosen) : undefined) ??
+    pickVoice(voices, language)
+  );
+}
+
+/** Installed voices of the language (pt-BR, then pt-PT…), best first. */
+export async function voicesFor(
+  language: string,
+): Promise<SpeechSynthesisVoice[]> {
+  const base = language.toLowerCase().split("-")[0];
+  const voices = (await loadVoices()).filter(
+    (voice) => voice.lang.toLowerCase().split(/[-_]/)[0] === base,
+  );
+  const exact = (voice: SpeechSynthesisVoice) =>
+    voice.lang.toLowerCase().replace("_", "-") === language.toLowerCase();
+  return voices.sort(
+    (a, b) =>
+      Number(exact(b)) - Number(exact(a)) || a.name.localeCompare(b.name),
+  );
+}
+
 /** Voices load asynchronously in Chromium. */
 function loadVoices(): Promise<SpeechSynthesisVoice[]> {
   const voices = speechSynthesis.getVoices();
@@ -53,11 +104,21 @@ function loadVoices(): Promise<SpeechSynthesisVoice[]> {
 
 export async function speak(
   text: string,
-  options: { language: string; rate: number; onEnd?: () => void },
+  options: {
+    language: string;
+    rate: number;
+    /** A voiceURI to use instead of the saved choice (the preview). */
+    voice?: string;
+    onEnd?: () => void;
+  },
 ): Promise<void> {
   stopSpeaking();
   const utterance = new SpeechSynthesisUtterance(text);
-  const voice = pickVoice(await loadVoices(), options.language);
+  const voice = chooseVoice(
+    await loadVoices(),
+    options.language,
+    options.voice ?? preferredVoice(),
+  );
   if (voice) utterance.voice = voice;
   utterance.lang = voice?.lang ?? options.language;
   utterance.rate = Math.min(2, Math.max(0.5, options.rate));

@@ -35,6 +35,8 @@ export type VoiceSettings = {
   speechRate: number;
   /** Read the answers aloud without being asked. */
   autoSpeak: boolean;
+  /** Listen for the assistant name in the background. */
+  wakeWordEnabled: boolean;
 };
 
 export const DEFAULT_VOICE_SETTINGS: VoiceSettings = {
@@ -42,4 +44,5 @@ export const DEFAULT_VOICE_SETTINGS: VoiceSettings = {
   language: "pt-BR",
   speechRate: 1,
   autoSpeak: true,
+  wakeWordEnabled: true,
 };
