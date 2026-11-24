@@ -11,3 +11,6 @@ dist
 # dotenv — NEVER commit credentials
 .env*
 !.env.example
+
+# Speech models (npm run models)
+resources/models/

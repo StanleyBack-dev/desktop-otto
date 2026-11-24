@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { EndOfSpeech } from "./end-of-speech";
-import { downsample, encodeWav, rms, toBase64 } from "./wav";
+import { downsample, encodeWav, rms, toBase64 } from "@shared/audio/wav";
 
 const OPTIONS = { threshold: 0.02, silenceMs: 1000, waitMs: 3000, maxMs: 8000 };
 

@@ -7,6 +7,7 @@ import type {
   VoiceSettings,
 } from "./assistant";
 import type { LoginRequest, LoginResult, SessionState } from "./session";
+import type { WakeEvent, WakeStatus } from "./wake";
 
 export const IPC = {
   appInfo: "app:info",
@@ -24,6 +25,17 @@ export const IPC = {
   focusQuestion: "ui:focus-question",
   /** main → renderer: the talk shortcut was pressed. */
   startListening: "ui:start-listening",
+  wakeEnable: "wake:enable",
+  wakeDisable: "wake:disable",
+  wakeStatus: "wake:status",
+  /** renderer → main: 16 kHz mono microphone audio (fire and forget). */
+  wakeAudio: "wake:audio",
+  wakePause: "wake:pause",
+  /** main → renderer: the name was heard. */
+  wakeHeard: "wake:heard",
+  /** main → renderer: the listening status changed. */
+  wakeStatusChanged: "wake:status-changed",
+  setWakeWordSetting: "assistant:set-wake-word",
 } as const;
 
 export type AppInfo = {
@@ -61,5 +73,18 @@ export interface OttoBridge {
     ask(request: AskRequest): Promise<AskResult>;
     askByVoice(request: VoiceAskRequest): Promise<AskResult>;
     voiceSettings(): Promise<VoiceSettings>;
+    /** Saves "listen for the name" in the account settings. */
+    setWakeWord(enabled: boolean): Promise<boolean>;
+  };
+  wake: {
+    enable(name: string): Promise<WakeStatus>;
+    disable(): Promise<WakeStatus>;
+    status(): Promise<WakeStatus>;
+    /** Streams microphone audio (16 kHz mono) to the local listener. */
+    sendAudio(samples: Float32Array): void;
+    /** Pause while Otto records, thinks or speaks. */
+    setPaused(paused: boolean): void;
+    onHeard(listener: (event: WakeEvent) => void): () => void;
+    onStatus(listener: (status: WakeStatus) => void): () => void;
   };
 }

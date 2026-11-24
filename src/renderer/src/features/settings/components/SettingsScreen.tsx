@@ -1,9 +1,19 @@
 import { useEffect, useState } from "react";
 import type { AppInfo } from "@shared/ipc";
 import type { SessionUser } from "@shared/session";
-import { Button, Card, Switch } from "@/design-system";
+import { Button, Card, Select, Switch } from "@/design-system";
 import { authClient } from "@/features/auth/api/auth.client";
+import { chatClient } from "@/features/chat/api/chat.client";
 import { systemClient } from "@/features/system/api/system.client";
+import { wakeClient } from "@/features/voice/api/wake.client";
+import { MicLevelMeter } from "@/features/voice/components/MicLevelMeter";
+import { VoicePicker } from "@/features/settings/components/VoicePicker";
+import {
+  listMicrophones,
+  preferredMicrophone,
+  setPreferredMicrophone,
+  type Microphone,
+} from "@/features/voice/model/microphone";
 
 // App settings on this PC: start with Windows, the shortcut and the account.
 export function SettingsScreen({
@@ -17,9 +27,20 @@ export function SettingsScreen({
 }) {
   const [autostart, setAutostart] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  const [wakeWord, setWakeWord] = useState<boolean | null>(null);
+  const [assistantName, setAssistantName] = useState("Otto");
+  const [microphones, setMicrophones] = useState<Microphone[]>([]);
+  const [microphone, setMicrophone] = useState(preferredMicrophone());
 
   useEffect(() => {
     void systemClient.autostart().then(setAutostart);
+    void listMicrophones()
+      .then(setMicrophones)
+      .catch(() => setMicrophones([]));
+    void chatClient.voiceSettings().then((voice) => {
+      setWakeWord(voice.wakeWordEnabled);
+      setAssistantName(voice.assistantName);
+    });
   }, []);
 
   return (
@@ -45,6 +66,51 @@ export function SettingsScreen({
               void systemClient.setAutostart(enabled).then(setAutostart);
             }}
           />
+        </Card>
+
+        <Card title="Voz">
+          <div className="mb-4">
+            <Select
+              label="Microfone"
+              hint="Usado para ouvir o nome e as perguntas. Se ele for desconectado, uso o padrão do Windows."
+              value={
+                microphones.some((mic) => mic.id === microphone)
+                  ? microphone
+                  : ""
+              }
+              options={[
+                { value: "", label: "Padrão do Windows" },
+                ...microphones.map((mic) => ({
+                  value: mic.id,
+                  label: mic.label,
+                })),
+              ]}
+              onChange={(id) => {
+                setPreferredMicrophone(id);
+                setMicrophone(id);
+              }}
+            />
+            <div className="mt-3">
+              <MicLevelMeter microphoneKey={microphone} />
+            </div>
+          </div>
+          <Switch
+            label={`Ouvir quando eu disser “${assistantName}”`}
+            hint="O reconhecimento do nome roda neste PC; nada sai daqui até você chamar."
+            checked={wakeWord ?? false}
+            disabled={wakeWord === null}
+            onChange={(enabled) => {
+              setWakeWord(enabled);
+              void wakeClient
+                .saveSetting(enabled)
+                .then(setWakeWord)
+                .catch(() => setWakeWord(!enabled));
+            }}
+          />
+        </Card>
+
+        <Card title="Voz do Otto">
+          <VoicePicker />
         </Card>
 
         <Card title="Atalhos (de qualquer lugar do Windows)">

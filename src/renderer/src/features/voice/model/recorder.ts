@@ -1,13 +1,9 @@
+import { openMicrophone } from "@/features/voice/model/microphone";
 import {
   DEFAULT_END_OF_SPEECH,
   EndOfSpeech,
 } from "@/features/voice/model/end-of-speech";
-import {
-  downsample,
-  encodeWav,
-  rms,
-  toBase64,
-} from "@/features/voice/model/wav";
+import { downsample, encodeWav, rms, toBase64 } from "@shared/audio/wav";
 
 export type Recording =
   | { status: "ok"; base64: string; mimeType: "audio/wav"; durationMs: number }
@@ -35,13 +31,11 @@ export function recordQuestion(
   const result = (async (): Promise<Recording> => {
     let stream: MediaStream;
     try {
-      stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          channelCount: 1,
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
+      stream = await openMicrophone({
+        channelCount: 1,
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
       });
     } catch {
       return {

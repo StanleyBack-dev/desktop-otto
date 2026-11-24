@@ -27,6 +27,9 @@ export function createMainWindow(options: { show: boolean }): BrowserWindow {
       contextIsolation: true,
       sandbox: true,
       nodeIntegration: false,
+      // The microphone keeps streaming to the name listener while the
+      // window is hidden in the notification area.
+      backgroundThrottling: false,
     },
   });
 
@@ -53,9 +56,14 @@ export function createMainWindow(options: { show: boolean }): BrowserWindow {
   return window;
 }
 
-export function showMainWindow(): void {
+/** focus: false shows Otto without taking the keyboard from the app in use. */
+export function showMainWindow(options: { focus?: boolean } = {}): void {
   if (!window) return;
   if (window.isMinimized()) window.restore();
+  if (options.focus === false) {
+    if (!window.isVisible()) window.showInactive();
+    return;
+  }
   window.show();
   window.focus();
 }

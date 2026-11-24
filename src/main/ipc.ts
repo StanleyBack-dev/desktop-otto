@@ -6,6 +6,7 @@ import type { AssistantService } from "./assistant/assistant.service";
 import { isAutostartEnabled, setAutostart } from "./autostart";
 import type { SessionService } from "./session/session.service";
 import type { ShortcutLabels } from "./shortcut";
+import type { WakeService } from "./wake/wake.service";
 import { refreshTrayMenu } from "./tray";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -16,8 +17,9 @@ export function registerIpc(deps: {
   session: SessionService;
   assistant: AssistantService;
   shortcuts: ShortcutLabels;
+  wake: WakeService;
 }): void {
-  const { session, assistant } = deps;
+  const { session, assistant, wake } = deps;
 
   ipcMain.handle(IPC.appInfo, (): AppInfo => ({
     name: app.getName(),
@@ -102,4 +104,22 @@ export function registerIpc(deps: {
     },
   );
   ipcMain.handle(IPC.voiceSettings, () => assistant.voiceSettings());
+  ipcMain.handle(IPC.setWakeWordSetting, (_event, enabled: unknown) =>
+    typeof enabled === "boolean" ? assistant.setWakeWord(enabled) : false,
+  );
+
+  ipcMain.handle(IPC.wakeEnable, (_event, name: unknown) =>
+    wake.enable(typeof name === "string" ? name.slice(0, 40) : "Otto"),
+  );
+  ipcMain.handle(IPC.wakeDisable, () => wake.disable());
+  ipcMain.handle(IPC.wakeStatus, () => wake.current());
+  ipcMain.on(IPC.wakeAudio, (_event, samples: unknown) => {
+    // At most 1 s of audio per message.
+    if (samples instanceof Float32Array && samples.length <= 16_000) {
+      wake.acceptAudio(samples);
+    }
+  });
+  ipcMain.on(IPC.wakePause, (_event, paused: unknown) => {
+    if (typeof paused === "boolean") wake.setPaused(paused);
+  });
 }
