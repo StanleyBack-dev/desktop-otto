@@ -1,7 +1,7 @@
 {
   "name": "desktop-otto",
   "productName": "Otto",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Otto desktop app — personal voice assistant for Windows",
   "author": "Stanley Rodrigues",
   "private": true,
