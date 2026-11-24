@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
-import { DEFAULT_VOICE_SETTINGS, type VoiceSettings } from "@shared/assistant";
+import {
+  DEFAULT_VOICE_SETTINGS,
+  type AskResult,
+  type VoiceSettings,
+} from "@shared/assistant";
 import { chatClient } from "@/features/chat/api/chat.client";
 import { chatReducer, INITIAL_CHAT } from "@/features/chat/model/chat-state";
 import { speak, stopSpeaking } from "@/features/chat/model/speech";
@@ -34,16 +38,8 @@ export function useChat() {
     [voice],
   );
 
-  const send = useCallback(
-    async (text: string) => {
-      const question = text.trim();
-      if (!question) return;
-      stopSpeaking();
-      dispatch({ type: "asked", id: newId(), text: question });
-      const result = await chatClient.ask({
-        text: question,
-        conversationId: conversationId.current,
-      });
+  const finish = useCallback(
+    (result: AskResult) => {
       if (!result.ok) {
         dispatch({
           type: "failed",
@@ -57,10 +53,43 @@ export function useChat() {
         id: newId(),
         text: result.answer.text,
         conversationId: result.answer.conversationId,
+        question: result.answer.question,
       });
       if (voice.autoSpeak) say(result.answer.text);
     },
     [voice.autoSpeak, say],
+  );
+
+  const send = useCallback(
+    async (text: string) => {
+      const question = text.trim();
+      if (!question) return;
+      stopSpeaking();
+      dispatch({ type: "asked", id: newId(), text: question });
+      finish(
+        await chatClient.ask({
+          text: question,
+          conversationId: conversationId.current,
+        }),
+      );
+    },
+    [finish],
+  );
+
+  /** A recorded question (WAV base64); the transcript replaces the placeholder. */
+  const sendVoice = useCallback(
+    async (audioBase64: string) => {
+      stopSpeaking();
+      dispatch({ type: "asked", id: newId(), text: "🎤 …" });
+      finish(
+        await chatClient.askByVoice({
+          audioBase64,
+          mimeType: "audio/wav",
+          conversationId: conversationId.current,
+        }),
+      );
+    },
+    [finish],
   );
 
   return {
@@ -68,6 +97,7 @@ export function useChat() {
     voice,
     speaking,
     send,
+    sendVoice,
     say,
     stop: () => {
       stopSpeaking();

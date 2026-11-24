@@ -5,6 +5,7 @@ import type { LoginResult } from "@shared/session";
 import type { AssistantService } from "./assistant/assistant.service";
 import { isAutostartEnabled, setAutostart } from "./autostart";
 import type { SessionService } from "./session/session.service";
+import type { ShortcutLabels } from "./shortcut";
 import { refreshTrayMenu } from "./tray";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -14,7 +15,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export function registerIpc(deps: {
   session: SessionService;
   assistant: AssistantService;
-  askShortcut: string | null;
+  shortcuts: ShortcutLabels;
 }): void {
   const { session, assistant } = deps;
 
@@ -22,7 +23,8 @@ export function registerIpc(deps: {
     name: app.getName(),
     version: app.getVersion(),
     platform: process.platform,
-    askShortcut: deps.askShortcut,
+    askShortcut: deps.shortcuts.ask,
+    talkShortcut: deps.shortcuts.talk,
   }));
   ipcMain.handle(IPC.autostartGet, () => isAutostartEnabled());
   ipcMain.handle(IPC.autostartSet, (_event, enabled: unknown) => {
@@ -72,6 +74,29 @@ export function registerIpc(deps: {
       }
       return assistant.ask({
         text,
+        conversationId: (conversationId as string | null) ?? null,
+      });
+    },
+  );
+  ipcMain.handle(
+    IPC.assistantAskByVoice,
+    (_event, request: unknown): Promise<AskResult> | AskResult => {
+      const { audioBase64, mimeType, conversationId } = (request ??
+        {}) as Record<string, unknown>;
+      if (
+        typeof audioBase64 !== "string" ||
+        mimeType !== "audio/wav" ||
+        (conversationId != null &&
+          (typeof conversationId !== "string" || !UUID.test(conversationId)))
+      ) {
+        return {
+          ok: false,
+          error: { code: "INVALID_INPUT", message: "Gravação inválida." },
+        };
+      }
+      return assistant.askByVoice({
+        audioBase64,
+        mimeType,
         conversationId: (conversationId as string | null) ?? null,
       });
     },

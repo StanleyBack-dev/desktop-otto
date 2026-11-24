@@ -20,6 +20,7 @@ const otto: OttoBridge = {
   app: {
     info: () => ipcRenderer.invoke(IPC.appInfo) as Promise<AppInfo>,
     onFocusQuestion: (listener) => on(IPC.focusQuestion, listener),
+    onStartListening: (listener) => on(IPC.startListening, listener),
   },
   autostart: {
     get: () => ipcRenderer.invoke(IPC.autostartGet) as Promise<boolean>,
@@ -41,6 +42,12 @@ const otto: OttoBridge = {
     ask: (request) =>
       ipcRenderer.invoke(IPC.assistantAsk, {
         text: request.text,
+        conversationId: request.conversationId,
+      }) as Promise<AskResult>,
+    askByVoice: (request) =>
+      ipcRenderer.invoke(IPC.assistantAskByVoice, {
+        audioBase64: request.audioBase64,
+        mimeType: request.mimeType,
         conversationId: request.conversationId,
       }) as Promise<AskResult>,
     voiceSettings: () =>

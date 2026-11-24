@@ -47,19 +47,14 @@ export function SettingsScreen({
           />
         </Card>
 
-        <Card title="Atalho">
-          <p className="text-sm">
-            {info?.askShortcut ? (
-              <>
-                <kbd className="rounded border border-line px-1.5 py-0.5 text-xs">
-                  {info.askShortcut}
-                </kbd>{" "}
-                abre o Otto pronto para perguntar, de qualquer lugar.
-              </>
-            ) : (
-              "O atalho global está sendo usado por outro programa."
-            )}
-          </p>
+        <Card title="Atalhos (de qualquer lugar do Windows)">
+          <ul className="flex flex-col gap-2 text-sm">
+            <ShortcutRow keys={info?.talkShortcut} action="falar com o Otto" />
+            <ShortcutRow
+              keys={info?.askShortcut}
+              action="digitar uma pergunta"
+            />
+          </ul>
         </Card>
 
         <Card title="Conta">
@@ -86,5 +81,28 @@ export function SettingsScreen({
         </p>
       </div>
     </main>
+  );
+}
+
+function ShortcutRow({
+  keys,
+  action,
+}: {
+  keys: string | null | undefined;
+  action: string;
+}) {
+  return (
+    <li>
+      {keys ? (
+        <>
+          <kbd className="rounded border border-line px-1.5 py-0.5 text-xs">
+            {keys}
+          </kbd>{" "}
+          {action}
+        </>
+      ) : (
+        `Atalho para ${action} em uso por outro programa.`
+      )}
+    </li>
   );
 }

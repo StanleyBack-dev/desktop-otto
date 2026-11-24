@@ -1,6 +1,11 @@
 // The contract between the screens (renderer) and the Node side (main):
 // channel names and the API the preload exposes as `window.otto`.
-import type { AskRequest, AskResult, VoiceSettings } from "./assistant";
+import type {
+  AskRequest,
+  AskResult,
+  VoiceAskRequest,
+  VoiceSettings,
+} from "./assistant";
 import type { LoginRequest, LoginResult, SessionState } from "./session";
 
 export const IPC = {
@@ -13,9 +18,12 @@ export const IPC = {
   /** main → renderer: the session changed. */
   sessionChanged: "session:changed",
   assistantAsk: "assistant:ask",
+  assistantAskByVoice: "assistant:ask-by-voice",
   voiceSettings: "assistant:voice-settings",
   /** main → renderer: the global shortcut was pressed. */
   focusQuestion: "ui:focus-question",
+  /** main → renderer: the talk shortcut was pressed. */
+  startListening: "ui:start-listening",
 } as const;
 
 export type AppInfo = {
@@ -25,6 +33,8 @@ export type AppInfo = {
   platform: string;
   /** Global shortcut that opens the question box (e.g. Ctrl+Shift+Space). */
   askShortcut: string | null;
+  /** Global shortcut to ask by voice (e.g. Ctrl+Shift+O). */
+  talkShortcut: string | null;
 };
 
 export interface OttoBridge {
@@ -32,6 +42,8 @@ export interface OttoBridge {
     info(): Promise<AppInfo>;
     /** The global shortcut was pressed. Returns the unsubscribe function. */
     onFocusQuestion(listener: () => void): () => void;
+    /** The talk shortcut was pressed. */
+    onStartListening(listener: () => void): () => void;
   };
   autostart: {
     /** Starts with Windows (minimized to the notification area). */
@@ -47,6 +59,7 @@ export interface OttoBridge {
   };
   assistant: {
     ask(request: AskRequest): Promise<AskResult>;
+    askByVoice(request: VoiceAskRequest): Promise<AskResult>;
     voiceSettings(): Promise<VoiceSettings>;
   };
 }
