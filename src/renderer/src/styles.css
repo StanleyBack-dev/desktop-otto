@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+/* Design tokens: one place for the Otto colors, light and dark. */
+@theme {
+  --color-brand: #2563eb;
+  --color-brand-strong: #1d4ed8;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f1f5f9;
+  --color-ink: #0f172a;
+  --color-ink-muted: #475569;
+  --color-line: #e2e8f0;
+  --font-sans: "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-surface: #0b1120;
+    --color-surface-muted: #111a2e;
+    --color-ink: #e2e8f0;
+    --color-ink-muted: #94a3b8;
+    --color-line: #1e293b;
+  }
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
