@@ -1,17 +1,28 @@
 import { app, ipcMain } from "electron";
+import type { AskResult } from "@shared/assistant";
 import { IPC, type AppInfo } from "@shared/ipc";
 import type { LoginResult } from "@shared/session";
+import type { AssistantService } from "./assistant/assistant.service";
 import { isAutostartEnabled, setAutostart } from "./autostart";
 import type { SessionService } from "./session/session.service";
 import { refreshTrayMenu } from "./tray";
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 // What the screens may ask the Node side. Every handler validates its input:
 // the renderer is treated as untrusted.
-export function registerIpc(session: SessionService): void {
+export function registerIpc(deps: {
+  session: SessionService;
+  assistant: AssistantService;
+  askShortcut: string | null;
+}): void {
+  const { session, assistant } = deps;
+
   ipcMain.handle(IPC.appInfo, (): AppInfo => ({
     name: app.getName(),
     version: app.getVersion(),
     platform: process.platform,
+    askShortcut: deps.askShortcut,
   }));
   ipcMain.handle(IPC.autostartGet, () => isAutostartEnabled());
   ipcMain.handle(IPC.autostartSet, (_event, enabled: unknown) => {
@@ -41,4 +52,29 @@ export function registerIpc(session: SessionService): void {
     },
   );
   ipcMain.handle(IPC.sessionLogout, () => session.logout());
+
+  ipcMain.handle(
+    IPC.assistantAsk,
+    (_event, request: unknown): Promise<AskResult> | AskResult => {
+      const { text, conversationId } = (request ?? {}) as Record<
+        string,
+        unknown
+      >;
+      if (
+        typeof text !== "string" ||
+        (conversationId != null &&
+          (typeof conversationId !== "string" || !UUID.test(conversationId)))
+      ) {
+        return {
+          ok: false,
+          error: { code: "INVALID_INPUT", message: "Pergunta inválida." },
+        };
+      }
+      return assistant.ask({
+        text,
+        conversationId: (conversationId as string | null) ?? null,
+      });
+    },
+  );
+  ipcMain.handle(IPC.voiceSettings, () => assistant.voiceSettings());
 }

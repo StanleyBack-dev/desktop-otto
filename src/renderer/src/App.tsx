@@ -1,10 +1,20 @@
+import { useEffect, useState } from "react";
+import type { AppInfo } from "@shared/ipc";
 import { ListeningMark } from "@/design-system";
 import { LoginScreen } from "@/features/auth/components/LoginScreen";
 import { useSession } from "@/features/auth/model/use-session";
-import { HomeScreen } from "@/features/system/components/HomeScreen";
+import { ChatScreen } from "@/features/chat/components/ChatScreen";
+import { SettingsScreen } from "@/features/settings/components/SettingsScreen";
+import { systemClient } from "@/features/system/api/system.client";
 
 export function App() {
   const session = useSession();
+  const [info, setInfo] = useState<AppInfo | null>(null);
+  const [screen, setScreen] = useState<"chat" | "settings">("chat");
+
+  useEffect(() => {
+    void systemClient.info().then(setInfo);
+  }, []);
 
   if (session.status === "loading") {
     return (
@@ -16,5 +26,21 @@ export function App() {
   if (session.status === "signed-out") {
     return <LoginScreen expired={session.reason === "expired"} />;
   }
-  return <HomeScreen user={session.user} offline={session.offline} />;
+  if (screen === "settings") {
+    return (
+      <SettingsScreen
+        user={session.user}
+        info={info}
+        onBack={() => setScreen("chat")}
+      />
+    );
+  }
+  return (
+    <ChatScreen
+      user={session.user}
+      offline={session.offline}
+      askShortcut={info?.askShortcut ?? null}
+      onOpenSettings={() => setScreen("settings")}
+    />
+  );
 }
