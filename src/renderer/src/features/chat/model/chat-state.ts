@@ -3,6 +3,8 @@ export type ChatMessage = {
   id: string;
   role: "user" | "otto" | "error";
   text: string;
+  /** Shown above the text (e.g. "Resumo do dia"). */
+  title?: string;
 };
 
 export type ChatState = {
@@ -23,6 +25,7 @@ export type ChatAction =
       question?: string;
     }
   | { type: "failed"; id: string; message: string }
+  | { type: "announced"; id: string; title: string; text: string }
   | { type: "reset" };
 
 export const INITIAL_CHAT: ChatState = {
@@ -71,6 +74,19 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
         messages: [
           ...state.messages,
           { id: action.id, role: "error", text: action.message },
+        ],
+      };
+    case "announced":
+      return {
+        ...state,
+        messages: [
+          ...state.messages,
+          {
+            id: action.id,
+            role: "otto",
+            title: action.title,
+            text: action.text,
+          },
         ],
       };
     case "reset":

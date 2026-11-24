@@ -3,6 +3,7 @@ import type { AskResult, VoiceSettings } from "@shared/assistant";
 import { IPC, type AppInfo, type OttoBridge } from "@shared/ipc";
 import type { LoginResult, SessionState } from "@shared/session";
 import type { WakeEvent, WakeStatus } from "@shared/wake";
+import type { Briefing } from "@shared/briefing";
 
 // Subscribes to a main → renderer event; returns the unsubscribe function.
 function on<T extends unknown[]>(
@@ -55,6 +56,13 @@ const otto: OttoBridge = {
       ipcRenderer.invoke(IPC.voiceSettings) as Promise<VoiceSettings>,
     setWakeWord: (enabled) =>
       ipcRenderer.invoke(IPC.setWakeWordSetting, enabled) as Promise<boolean>,
+  },
+  briefing: {
+    today: () => ipcRenderer.invoke(IPC.briefingToday) as Promise<Briefing>,
+    regenerate: () =>
+      ipcRenderer.invoke(IPC.briefingRegenerate) as Promise<Briefing>,
+    onPresented: (listener) =>
+      on<[Briefing]>(IPC.briefingPresented, (briefing) => listener(briefing)),
   },
   wake: {
     enable: (name) =>

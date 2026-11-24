@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { SessionUser } from "@shared/session";
 import type { WakeStatus } from "@shared/wake";
 import { Alert, Button, ListeningMark } from "@/design-system";
@@ -6,6 +6,7 @@ import { chatClient } from "@/features/chat/api/chat.client";
 import { Composer } from "@/features/chat/components/Composer";
 import { MessageBubble } from "@/features/chat/components/MessageBubble";
 import { useChat } from "@/features/chat/model/use-chat";
+import { briefingClient } from "@/features/briefing/api/briefing.client";
 import { MicButton } from "@/features/voice/components/MicButton";
 import { useVoiceInput } from "@/features/voice/model/use-voice-input";
 import { useWakeWord } from "@/features/voice/model/use-wake-word";
@@ -32,6 +33,29 @@ export function ChatScreen({
   const chat = useChat();
   const voice = useVoiceInput(chat.sendVoice);
   const listening = voice.state.status === "listening";
+  const announce = chat.announce;
+  useEffect(
+    () =>
+      briefingClient.onPresented((briefing) =>
+        announce("Resumo do dia", briefing.text),
+      ),
+    [announce],
+  );
+  const [loadingBriefing, setLoadingBriefing] = useState(false);
+  async function showBriefing() {
+    setLoadingBriefing(true);
+    try {
+      announce("Resumo do dia", (await briefingClient.today()).text);
+    } catch {
+      announce(
+        "Resumo do dia",
+        "Não consegui buscar o resumo agora. Tente de novo.",
+      );
+    } finally {
+      setLoadingBriefing(false);
+    }
+  }
+
   const wake = useWakeWord({
     enabled: chat.voice.wakeWordEnabled,
     name: chat.voice.assistantName,
@@ -74,6 +98,13 @@ export function ChatScreen({
               Nova conversa
             </Button>
           )}
+          <Button
+            variant="ghost"
+            loading={loadingBriefing}
+            onClick={() => void showBriefing()}
+          >
+            Resumo
+          </Button>
           <Button variant="ghost" onClick={onOpenSettings}>
             Ajustes
           </Button>
